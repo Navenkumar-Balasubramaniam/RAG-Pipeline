@@ -187,6 +187,16 @@ class Settings(BaseSettings):
         default="cross-encoder/ms-marco-MiniLM-L-6-v2",
         description="Cross-encoder model used for reranking retrieved chunks.",
     )
+    reranker_device: str = Field(
+        default="cpu",
+        description=(
+            "Compute device for the reranker cross-encoder. 'cpu' for "
+            "CPU-only machines (this project's default). Set to 'cuda' "
+            "if running on an NVIDIA GPU. Must be an explicit string — "
+            "the sbert-rerank library's None default fails its own "
+            "schema validation."
+        ),
+    )
     top_n_rerank: int = Field(
         default=3,
         ge=1,
