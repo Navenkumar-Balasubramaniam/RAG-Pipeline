@@ -104,3 +104,51 @@ def nonexistent_pdf(tmp_path: Path) -> Path:
         Path to a file that does not exist.
     """
     return tmp_path / "does_not_exist.pdf"
+
+# ============================================================
+# Full OCR pipeline — SLOW, marked accordingly
+# ============================================================
+# These tests actually invoke PaddleOCR. They are slow (~10s first run for
+# model download, ~2s after) and they download ~25 MB of model files on
+# first use. We mark them @pytest.mark.slow so the default `pytest` skips
+# them; run with `pytest -m slow` to include them.
+# ============================================================
+
+@pytest.fixture(scope="session")
+def sample_image_pdf(fixtures_dir: Path) -> Path:
+    """
+    Generate a PDF whose 'text' is actually rendered as an image, so
+    PyMuPDF cannot extract it directly. This forces the OCR branch.
+
+    We build the PDF by drawing text on a fitz Pixmap (a raster image)
+    and inserting that pixmap as a page-sized image — no real text layer.
+    """
+    pdf_path = fixtures_dir / "sample_image.pdf"
+
+    if not pdf_path.exists():
+        # Create an image with text using PIL (already in our deps via
+        # paddleocr / transformers — but to keep this self-contained,
+        # we use fitz's built-in text-on-page-then-flatten trick).
+        #
+        # Trick: render a one-page PDF with text, then re-import the
+        # rendered pixmap as a new image-only PDF. The result has no
+        # extractable text layer.
+        src = fitz.open()
+        page = src.new_page()
+        page.insert_text(
+            (72, 200),
+            "HELLO OCR WORLD\nThis is text rendered as an image.",
+            fontsize=36,
+        )
+        # Render to a pixmap (raster), then save as an image-only PDF
+        pix = page.get_pixmap(dpi=200)
+        img_bytes = pix.tobytes("png")
+        src.close()
+
+        out = fitz.open()
+        new_page = out.new_page(width=pix.width, height=pix.height)
+        new_page.insert_image(new_page.rect, stream=img_bytes)
+        out.save(pdf_path)
+        out.close()
+
+    return pdf_path

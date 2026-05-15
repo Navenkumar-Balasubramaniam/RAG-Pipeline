@@ -80,16 +80,84 @@ class TestLoadPdf:
         assert source == "text"
         assert len(text) > 0
 
-    def test_blank_pdf_triggers_ocr_branch(self, sample_blank_pdf: Path):
-        """
-        A blank PDF should fall through to OCR. Until Step 4B implements
-        OCR, the placeholder raises NotImplementedError. The fact that we
-        reach this branch at all proves detection routed correctly.
-        """
-        with pytest.raises(NotImplementedError, match="OCR pipeline"):
-            load_pdf(sample_blank_pdf)
+    
 
     def test_missing_file_raises_filenotfounderror(self, nonexistent_pdf: Path):
         """Loading a missing file should raise FileNotFoundError, clearly."""
         with pytest.raises(FileNotFoundError, match="PDF not found"):
             load_pdf(nonexistent_pdf)
+            
+# ============================================================
+# preprocess_image — pure OpenCV, fast, deterministic
+# ============================================================
+
+class TestPreprocessImage:
+    """OpenCV preprocessing tests — fast, no models needed."""
+
+    def test_returns_single_channel(self):
+        """Preprocessing a 3-channel BGR image should yield grayscale (2-D)."""
+        from src.pdf_loader import preprocess_image
+        import numpy as np
+
+        # Build a fake 100×100 BGR image filled with mid-gray pixels
+        fake_image = np.full((100, 100, 3), 128, dtype=np.uint8)
+
+        result = preprocess_image(fake_image)
+
+        # Output must be single-channel (2-dim) since we binarised
+        assert result.ndim == 2
+        assert result.shape == (100, 100)
+
+    def test_returns_binary_pixel_values(self):
+        """Adaptive threshold output should contain only 0 and 255."""
+        from src.pdf_loader import preprocess_image
+        import numpy as np
+
+        # A noisy image so the threshold actually has something to threshold
+        rng = np.random.default_rng(seed=42)
+        fake_image = rng.integers(0, 256, size=(100, 100, 3), dtype=np.uint8)
+
+        result = preprocess_image(fake_image)
+
+        unique_vals = set(np.unique(result).tolist())
+        # Binary threshold guarantees only 0 and 255 in the output
+        assert unique_vals.issubset({0, 255})
+
+    def test_preserves_dimensions(self):
+        """Preprocessing must not change image height or width."""
+        from src.pdf_loader import preprocess_image
+        import numpy as np
+
+        fake_image = np.full((250, 400, 3), 200, dtype=np.uint8)
+        result = preprocess_image(fake_image)
+        assert result.shape == (250, 400)
+
+
+
+
+@pytest.mark.slow
+class TestRunOcr:
+    """Integration tests for the full OCR pipeline."""
+
+    def test_ocr_extracts_text_from_image_pdf(self, sample_image_pdf: Path):
+        """
+        OCR should recognise the text we burnt into the image. The
+        match is fuzzy because OCR isn't perfect — we just look for
+        a substring we expect to appear.
+        """
+        from src.pdf_loader import run_ocr
+
+        text = run_ocr(sample_image_pdf)
+        assert isinstance(text, str)
+        assert len(text) > 0
+        # Case-insensitive substring check — OCR may produce all caps,
+        # mixed case, or have minor character errors
+        assert "HELLO" in text.upper() or "OCR" in text.upper()
+
+    def test_load_pdf_routes_image_pdf_to_ocr(self, sample_image_pdf: Path):
+        """End-to-end: load_pdf on an image PDF returns source='ocr'."""
+        from src.pdf_loader import load_pdf
+
+        text, source = load_pdf(sample_image_pdf)
+        assert source == "ocr"
+        assert len(text) > 0
