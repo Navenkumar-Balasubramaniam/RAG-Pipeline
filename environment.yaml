@@ -1,0 +1,76 @@
+# ============================================================
+# Conda environment specification for pfizer-rag-pipeline
+#
+# Create the environment:
+#     conda env create -f environment.yaml
+# Activate it:
+#     conda activate rag-pipeline
+# Update it after edits:
+#     conda env update -f environment.yaml --prune
+# ============================================================
+
+name: rag-pipeline
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ----------------------------------------------------------
+  # Python interpreter
+  # ----------------------------------------------------------
+  - python=3.11
+
+  # ----------------------------------------------------------
+  # Core scientific stack — installed via conda for reliable
+  # native binary builds (numpy, pandas need compiled C code)
+  # ----------------------------------------------------------
+  - pip
+  - numpy
+  - pandas
+
+  # ----------------------------------------------------------
+  # PDF and image processing
+  # PyMuPDF (the 'fitz' module) — text extraction from PDFs
+  # OpenCV — image preprocessing pipeline for OCR fallback
+  # ----------------------------------------------------------
+  - pymupdf
+  - opencv
+
+  # ----------------------------------------------------------
+  # Everything else via pip — versions current as of 2026
+  # ----------------------------------------------------------
+  - pip:
+      # ----- RAG framework: LlamaIndex stack -----
+      - llama-index==0.11.23
+      - llama-index-embeddings-huggingface==0.3.1
+      - llama-index-retrievers-bm25==0.4.0
+      - llama-index-postprocessor-sbert-rerank==0.2.1
+
+      # ----- Embeddings & reranking -----
+      - sentence-transformers==3.2.1
+      - transformers==4.45.2
+      - torch==2.4.1                # CPU build is the default on PyPI
+
+      # ----- OCR (image-based PDF fallback) -----
+      - paddleocr==2.8.1
+      - paddlepaddle==2.6.1
+
+      # ----- Local LLM client -----
+      - ollama==0.3.3               # Python SDK that talks to the Ollama service
+
+      # ----- Configuration & secrets -----
+      - pydantic==2.9.2
+      - pydantic-settings==2.6.0
+      - python-dotenv==1.0.1
+
+      # ----- Web UI -----
+      - streamlit==1.39.0
+
+      # ----- Logging -----
+      - loguru==0.7.2
+
+      # ----- Testing -----
+      - pytest==8.3.3
+      - pytest-cov==5.0.0           # for test coverage reports
+      - pytest-mock==3.14.0         # 'mocker' fixture for mocking external services

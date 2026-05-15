@@ -1,0 +1,65 @@
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# ============================================================
+# Virtual environments
+# ============================================================
+.env
+.venv/
+venv/
+env/
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ============================================================
+# Project data — never commit user PDFs, indices, or logs
+# But keep the folder structure via .gitkeep files
+# ============================================================
+data/uploads/*
+!data/uploads/.gitkeep
+
+data/indices/*
+!data/indices/.gitkeep
+
+logs/*
+!logs/.gitkeep
+
+# ============================================================
+# Model files (in case we ever download GGUF directly)
+# Ollama stores models elsewhere, but just in case
+# ============================================================
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# ============================================================
+# Jupyter
+# ============================================================
+.ipynb_checkpoints/
+
+# ============================================================
+# OS junk
+# ============================================================
+Thumbs.db
+desktop.ini
