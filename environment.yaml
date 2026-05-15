@@ -18,15 +18,17 @@ channels:
 dependencies:
   # ----------------------------------------------------------
   # Python interpreter
+  # PaddlePaddle 2.6.x ships wheels for 3.8–3.11, so we stay on 3.11
   # ----------------------------------------------------------
   - python=3.11
 
   # ----------------------------------------------------------
-  # Core scientific stack — installed via conda for reliable
-  # native binary builds (numpy, pandas need compiled C code)
+  # Core scientific stack — installed via conda for native binaries
+  # NumPy pinned to 1.x: PaddlePaddle 2.6.2 was built before NumPy 2,
+  # and importing it with NumPy 2.x throws an ABI error
   # ----------------------------------------------------------
   - pip
-  - numpy
+  - "numpy<2.0"
   - pandas
 
   # ----------------------------------------------------------
@@ -38,39 +40,42 @@ dependencies:
   - opencv
 
   # ----------------------------------------------------------
-  # Everything else via pip — versions current as of 2026
+  # Everything else via pip
+  # Strict pins on top-level frameworks, minimum-version
+  # constraints on transitive ML deps to let pip resolve them
   # ----------------------------------------------------------
   - pip:
-      # ----- RAG framework: LlamaIndex stack -----
-      - llama-index==0.11.23
-      - llama-index-embeddings-huggingface==0.3.1
-      - llama-index-retrievers-bm25==0.4.0
-      - llama-index-postprocessor-sbert-rerank==0.2.1
+      # ----- RAG framework: LlamaIndex 0.12.x stack -----
+      # 0.12 was a coordinated bump; all integrations on this line work together
+      - llama-index>=0.12.0,<0.13.0
+      - llama-index-embeddings-huggingface>=0.4.0,<0.5.0
+      - llama-index-retrievers-bm25>=0.5.0,<0.6.0
+      - llama-index-postprocessor-sbert-rerank>=0.3.0,<0.4.0
 
       # ----- Embeddings & reranking -----
-      - sentence-transformers==3.2.1
-      - transformers==4.45.2
-      - torch==2.4.1                # CPU build is the default on PyPI
+      - sentence-transformers>=3.0.0
+      - transformers>=4.40.0
+      - torch>=2.2.0                # CPU build is the default on PyPI
 
       # ----- OCR (image-based PDF fallback) -----
       - paddleocr==2.8.1
-      - paddlepaddle==2.6.1
+      - paddlepaddle==2.6.2
 
       # ----- Local LLM client -----
-      - ollama==0.3.3               # Python SDK that talks to the Ollama service
+      - ollama>=0.3.0
 
       # ----- Configuration & secrets -----
-      - pydantic==2.9.2
-      - pydantic-settings==2.6.0
-      - python-dotenv==1.0.1
+      - pydantic>=2.5.0
+      - pydantic-settings>=2.3.0
+      - python-dotenv>=1.0.0
 
       # ----- Web UI -----
       - streamlit==1.39.0
 
       # ----- Logging -----
-      - loguru==0.7.2
+      - loguru>=0.7.0
 
       # ----- Testing -----
-      - pytest==8.3.3
-      - pytest-cov==5.0.0           # for test coverage reports
-      - pytest-mock==3.14.0         # 'mocker' fixture for mocking external services
+      - pytest>=8.0.0
+      - pytest-cov>=5.0.0
+      - pytest-mock>=3.14.0
